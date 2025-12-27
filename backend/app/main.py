@@ -1,12 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.db.postgres import create_tables
+from sqlmodel import Session
+
+from app.db.postgres import create_tables, engine
 from app.routers.auth import router as auth_router
 from app.routers.communities import router as communities_router
 from app.routers.posts import router as posts_router
 from app.routers.comments import router as comments_router
 from app.routers.media import router as media_router
+from app.services.seed import seed_demo_data
 
 app = FastAPI(title="Reddit Big Data MVP", version="0.1.0")
 
@@ -23,8 +26,10 @@ app.add_middleware(
 )
 
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     create_tables()
+    with Session(engine) as session:
+        await seed_demo_data(session)
 
 app.include_router(auth_router)
 app.include_router(communities_router)
