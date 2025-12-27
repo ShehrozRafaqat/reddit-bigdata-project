@@ -1,0 +1,30 @@
+# Env / secrets
+.env
+*.env
+.env.*
+!/.env.example
+
+# Node
+frontend/node_modules
+frontend/dist
+frontend/.vite
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Data / volumes
+datalake/
+*.sqlite
+*.log

@@ -1,0 +1,100 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-reddit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-redditpass}
+      POSTGRES_DB: ${POSTGRES_DB:-redditdb}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-mongoadmin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-mongopass}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+
+  minio:
+    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadminpass}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      # Postgres
+      POSTGRES_USER: ${POSTGRES_USER:-reddit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-redditpass}
+      POSTGRES_DB: ${POSTGRES_DB:-redditdb}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-reddit}:${POSTGRES_PASSWORD:-redditpass}@postgres:5432/${POSTGRES_DB:-redditdb}
+
+      # Mongo
+      MONGO_ROOT_USER: ${MONGO_ROOT_USER:-mongoadmin}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-mongopass}
+      MONGO_DB: ${MONGO_DB:-reddit}
+      MONGO_URL: mongodb://${MONGO_ROOT_USER:-mongoadmin}:${MONGO_ROOT_PASSWORD:-mongopass}@mongo:27017/?authSource=admin
+
+      # MinIO (S3 compatible)
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadminpass}
+      MINIO_BUCKET: ${MINIO_BUCKET:-media}
+
+      # App
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-env}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-1440}
+      EVENT_LOG_DIR: /datalake/events
+      APP_ENV: ${APP_ENV:-dev}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./datalake:/datalake
+    depends_on:
+      - postgres
+      - mongo
+      - minio
+
+  # Optional admin UIs (start with: docker compose --profile admin up -d)
+  pgadmin:
+    profiles: ["admin"]
+    image: dpage/pgadmin4:8
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+  mongo-express:
+    profiles: ["admin"]
+    image: mongo-express:1
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER:-mongoadmin}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-mongopass}
+      ME_CONFIG_MONGODB_SERVER: mongo
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongo
+
+volumes:
+  pgdata:
+  mongodata:
+  miniodata:
