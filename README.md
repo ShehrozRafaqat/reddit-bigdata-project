@@ -8,131 +8,128 @@ A **small Reddit-style MVP** aligned with the design doc:
 
 ---
 
-## 0) Prerequisites (Windows)
-1. Install **Docker Desktop** (WSL2 enabled if prompted).
+## 0) Prerequisites
+1. Install **Docker Desktop**.
 2. Install **Node.js 18+** (for the React UI).
-3. Install **VS Code** (recommended).
-4. Verify:
-   ```powershell
+3. Verify:
+   ```bash
    docker --version
    docker compose version
    node -v
    npm -v
+   ```
 
-1) Run the backend stack (API + Postgres + Mongo + MinIO)
+## 1) Run the backend stack (API + Postgres + Mongo + MinIO)
 
 From repo root:
 
 PowerShell (Windows)
+```powershell
 Copy-Item .env.example .env
 docker compose up -d --build
 docker compose ps
+```
 
 Bash (Git Bash / WSL)
+```bash
 cp .env.example .env
 docker compose up -d --build
 docker compose ps
+```
 
 Open:
 
-API docs (Swagger): http://localhost:8000/docs
-
-MinIO console: http://localhost:9001
- (use MINIO_ROOT_USER/MINIO_ROOT_PASSWORD from .env)
+- API docs (Swagger): http://localhost:8000/docs
+- MinIO console: http://localhost:9001 (use MINIO_ROOT_USER/MINIO_ROOT_PASSWORD from .env)
 
 Optional admin UIs:
-
+```bash
 docker compose --profile admin up -d
+```
 
+- pgAdmin: http://localhost:5050
+- mongo-express: http://localhost:8081
 
-pgAdmin: http://localhost:5050
-
-mongo-express: http://localhost:8081
-
-2) Run the React UI (frontend)
+## 2) Run the React UI (frontend)
 
 In a second terminal:
-
+```bash
 cd frontend
 npm install
 npm run dev
+```
 
+Open UI: http://localhost:5173
 
-Open UI:
+## 3) Demo-ready flow checklist
 
-React UI: http://localhost:5173
+✅ No CORS errors in browser console (React → API)
 
-3) Quick demo flow (UI + Swagger)
-UI demo
+1. **Register**
+2. **Login**
+3. **Create Community** (left sidebar)
+4. **Create Post** (optional media upload)
+5. **Add Comment**
+6. **Feed renders** (new posts/comments show after submit)
 
-Register
+## 4) Demo seed data
 
-Login
+On first startup the API auto-seeds demo data:
+- User: `demo` / `demo1234`
+- Community: `r/demo`
+- One welcome post + comment
 
-Create/select a community
+If you want a clean slate, stop containers and wipe volumes:
+```bash
+docker compose down -v
+```
 
-Create a post (optional image/video)
+## 5) Swagger demo (backup / for showing APIs)
 
-Add comments
+- Register → `POST /auth/register`
+- Login → `POST /auth/login` (copy token)
+- Swagger Authorize → `Bearer <token>`
+- Create community → `POST /communities`
+- Upload media → `POST /media/upload` (returns key + presigned URL)
+- Create post → `POST /posts` (include `media_keys`)
+- Comment → `POST /comments`
+- List → `GET /communities/{community_id}/posts`, `GET /posts/{post_id}/comments`
 
-Swagger demo (backup / for showing APIs)
-
-Register → POST /auth/register
-
-Login → POST /auth/login (copy token)
-
-Swagger Authorize → Bearer <token>
-
-Create community → POST /communities
-
-Upload media → POST /media/upload (returns key + presigned URL)
-
-Create post → POST /posts (include media_keys)
-
-Comment → POST /comments
-
-List → GET /communities/{community_id}/posts, GET /posts/{post_id}/comments
-
-4) Analytics mini-demo (batch over event logs)
+## 6) Analytics mini-demo (batch over event logs)
 
 Events are appended to JSONL files in:
-./datalake/events/YYYY-MM-DD.jsonl
+`./datalake/events/YYYY-MM-DD.jsonl`
 
 Run inside the API container:
-
+```bash
 docker compose exec api python scripts/daily_metrics.py
+```
 
-5) Stop / reset
+## 7) Troubleshooting
 
-Stop:
-
-docker compose down
-
-
-Stop and delete databases:
-
-docker compose down -v
-
-6) Troubleshooting
-CORS errors in browser (React -> API blocked)
+### CORS errors in browser (React → API blocked)
 
 If you see CORS errors, ensure FastAPI enables CORS for http://localhost:5173,
 rebuild API:
-
+```bash
 docker compose up -d --build api
-Ports in use
+```
+
+### Ports in use
 
 If ports are busy, stop old containers:
+```bash
 docker compose down
-docker ps
+```
 
 ---
 
-### One more tip before handing to Codex
-Also add a short “Codex Tasks” section at bottom (optional) with bullets like:
-- Fix CORS
-- Make Create Community available in UI
-- Show comments under each post
-- Seed demo data
+## Demo checklist (quick)
 
-If you want, paste your current `docker-compose.yml` and I’ll add the **exact** UI service (so `docker compose up` also runs frontend automatically).
+- [ ] `docker compose up -d --build`
+- [ ] `npm install` + `npm run dev`
+- [ ] Register + Login from UI
+- [ ] Create community
+- [ ] Create post (optional media upload)
+- [ ] Add comment
+- [ ] Verify feed renders new content
