@@ -47,6 +47,16 @@ export const createCommunity = (token, data) =>
     body: JSON.stringify(data),
   }).then(handleResponse);
 
+export const updateCommunity = (token, communityId, data) =>
+  fetch(`${API_BASE}/communities/${communityId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(token),
+    },
+    body: JSON.stringify(data),
+  }).then(handleResponse);
+
 export const listPosts = (communityId) =>
   fetch(`${API_BASE}/communities/${communityId}/posts`).then(handleResponse);
 

@@ -42,6 +42,9 @@ export default function PostCard({
         <span className="rounded-full bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-600">
           r/{communityName || "community"}
         </span>
+        {post.author_username ? (
+          <span className="text-slate-600">u/{post.author_username}</span>
+        ) : null}
         <span>{new Date(post.created_at).toLocaleString()}</span>
       </div>
       <h3 className="mt-3 text-lg font-semibold text-slate-900">{post.title}</h3>

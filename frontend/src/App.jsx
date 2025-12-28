@@ -14,6 +14,7 @@ import {
   mediaUrl,
   presignMedia,
   register,
+  updateCommunity,
   updateProfile,
   uploadMedia,
 } from "./api";
@@ -48,6 +49,8 @@ export default function App() {
   const [selectedCommunityId, setSelectedCommunityId] = useState(null);
   const [communityForm, setCommunityForm] = useState({ name: "", description: "" });
   const [communityMessage, setCommunityMessage] = useState("");
+  const [communityEditForm, setCommunityEditForm] = useState({ name: "", description: "" });
+  const [communityEditMessage, setCommunityEditMessage] = useState("");
   const [posts, setPosts] = useState([]);
   const [postForm, setPostForm] = useState(emptyPost);
   const [postMessage, setPostMessage] = useState("");
@@ -133,6 +136,16 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (selectedCommunity) {
+      setCommunityEditForm({
+        name: selectedCommunity.name || "",
+        description: selectedCommunity.description || "",
+      });
+      setCommunityEditMessage("");
+    }
+  }, [selectedCommunity]);
+
   const loadPosts = async (communityId) => {
     if (!communityId) {
       setPosts([]);
@@ -153,6 +166,24 @@ export default function App() {
       setSelectedCommunityId(created.id);
     } catch (error) {
       setCommunityMessage(error.message);
+    }
+  };
+
+  const handleUpdateCommunity = async (event) => {
+    event.preventDefault();
+    if (!selectedCommunityId) return;
+    setCommunityEditMessage("");
+    try {
+      const updated = await updateCommunity(token, selectedCommunityId, communityEditForm);
+      setCommunities((prev) =>
+        prev.map((community) =>
+          community.id === selectedCommunityId ? { ...community, ...updated } : community
+        )
+      );
+      await loadUserCommunitiesList();
+      setCommunityEditMessage("Community updated.");
+    } catch (error) {
+      setCommunityEditMessage(error.message);
     }
   };
 
@@ -444,6 +475,46 @@ export default function App() {
                     <p className="mt-1 text-sm text-slate-500">
                       {selectedCommunity?.description || "Pick a community to see posts."}
                     </p>
+                    {loggedIn &&
+                    profile?.id &&
+                    selectedCommunity?.created_by_user_id === profile.id ? (
+                      <form className="mt-4 space-y-3" onSubmit={handleUpdateCommunity}>
+                        <input
+                          type="text"
+                          value={communityEditForm.name}
+                          onChange={(event) =>
+                            setCommunityEditForm({
+                              ...communityEditForm,
+                              name: event.target.value,
+                            })
+                          }
+                          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                          required
+                        />
+                        <textarea
+                          value={communityEditForm.description}
+                          onChange={(event) =>
+                            setCommunityEditForm({
+                              ...communityEditForm,
+                              description: event.target.value,
+                            })
+                          }
+                          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                          rows={3}
+                        />
+                        <button
+                          className="rounded-xl bg-orange-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-500"
+                          type="submit"
+                        >
+                          Update community
+                        </button>
+                        {communityEditMessage ? (
+                          <span className="text-sm text-rose-500">
+                            {communityEditMessage}
+                          </span>
+                        ) : null}
+                      </form>
+                    ) : null}
                   </div>
                   {loggedIn && selectedCommunity ? (
                     <button
