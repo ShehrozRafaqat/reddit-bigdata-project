@@ -12,10 +12,11 @@ import {
   uploadMedia,
 } from "./api";
 import AuthPage from "./components/AuthPage";
+import Footer from "./components/Footer";
+import Header from "./components/Header";
 import PostCard from "./components/PostCard";
 import PostComposer from "./components/PostComposer";
 import Sidebar from "./components/Sidebar";
-import TopNav from "./components/TopNav";
 
 const emptyForm = {
   username: "",
@@ -46,12 +47,18 @@ export default function App() {
   const [commentLists, setCommentLists] = useState({});
   const [commentMessage, setCommentMessage] = useState("");
   const [mediaMap, setMediaMap] = useState({});
+  const [activePostId, setActivePostId] = useState(null);
 
   const loggedIn = Boolean(token);
 
   const selectedCommunity = useMemo(
     () => communities.find((community) => community.id === selectedCommunityId),
     [communities, selectedCommunityId]
+  );
+
+  const activePost = useMemo(
+    () => posts.find((post) => post.post_id === activePostId),
+    [posts, activePostId]
   );
 
   const resetAuthForm = () => {
@@ -206,6 +213,16 @@ export default function App() {
     setMediaMap((prev) => ({ ...prev, ...updates }));
   };
 
+  const handleOpenPost = (postId) => {
+    setActivePostId(postId);
+    setView("post");
+  };
+
+  const handleBackHome = () => {
+    setView("home");
+    setActivePostId(null);
+  };
+
   useEffect(() => {
     loadCommunities().catch(() => undefined);
   }, []);
@@ -222,98 +239,166 @@ export default function App() {
   }, [posts, token]);
 
   useEffect(() => {
-    if (loggedIn && view !== "home") {
+    if (loggedIn && (view === "login" || view === "register")) {
       setView("home");
     }
   }, [loggedIn, view]);
 
+  useEffect(() => {
+    if (view === "post" && activePostId) {
+      handleLoadComments(activePostId).catch(() => undefined);
+    }
+  }, [activePostId, view]);
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <TopNav
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+      <Header
         loggedIn={loggedIn}
         username={username}
         onLogin={() => switchAuthView("login")}
         onRegister={() => switchAuthView("register")}
         onLogout={handleLogout}
-        onHome={() => setView("home")}
+        onHome={handleBackHome}
       />
 
-      {view === "login" && !loggedIn ? (
-        <AuthPage
-          mode="login"
-          authForm={authForm}
-          message={authMessage}
-          onChange={setAuthForm}
-          onSubmit={handleAuthSubmit}
-          onSwitchMode={switchAuthView}
-          onBack={() => setView("home")}
-        />
-      ) : null}
-      {view === "register" && !loggedIn ? (
-        <AuthPage
-          mode="register"
-          authForm={authForm}
-          message={authMessage}
-          onChange={setAuthForm}
-          onSubmit={handleAuthSubmit}
-          onSwitchMode={switchAuthView}
-          onBack={() => setView("home")}
-        />
-      ) : null}
-      {view === "home" ? (
-        <main className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[280px_1fr]">
-          <Sidebar
-            communities={communities}
-            selectedCommunityId={selectedCommunityId}
-            onSelectCommunity={setSelectedCommunityId}
-            loggedIn={loggedIn}
-            communityForm={communityForm}
-            onCommunityFormChange={setCommunityForm}
-            onCreateCommunity={handleCreateCommunity}
-            communityMessage={communityMessage}
+      <main className="flex-1">
+        {view === "login" && !loggedIn ? (
+          <AuthPage
+            mode="login"
+            authForm={authForm}
+            message={authMessage}
+            onChange={setAuthForm}
+            onSubmit={handleAuthSubmit}
+            onSwitchMode={switchAuthView}
+            onBack={() => setView("home")}
           />
-
-          <section className="space-y-6">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-xl font-semibold text-slate-900">
-                {selectedCommunity ? `r/${selectedCommunity.name}` : "Select a community"}
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                {selectedCommunity?.description || "Pick a community to see posts."}
-              </p>
-            </div>
-
-            <PostComposer
+        ) : null}
+        {view === "register" && !loggedIn ? (
+          <AuthPage
+            mode="register"
+            authForm={authForm}
+            message={authMessage}
+            onChange={setAuthForm}
+            onSubmit={handleAuthSubmit}
+            onSwitchMode={switchAuthView}
+            onBack={() => setView("home")}
+          />
+        ) : null}
+        {view === "home" ? (
+          <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[280px_1fr]">
+            <Sidebar
+              communities={communities}
+              selectedCommunityId={selectedCommunityId}
+              onSelectCommunity={setSelectedCommunityId}
               loggedIn={loggedIn}
-              postForm={postForm}
-              onPostFormChange={setPostForm}
-              onCreatePost={handleCreatePost}
-              postMessage={postMessage}
+              communityForm={communityForm}
+              onCommunityFormChange={setCommunityForm}
+              onCreateCommunity={handleCreateCommunity}
+              communityMessage={communityMessage}
             />
 
-            <div className="space-y-6">
-              {posts.length === 0 ? (
-                <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-400">
-                  No posts yet. Be the first to post!
+            <section className="space-y-6">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {selectedCommunity ? `r/${selectedCommunity.name}` : "Select a community"}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {selectedCommunity?.description || "Pick a community to see posts."}
                 </p>
-              ) : null}
-              {posts.map((post) => (
+              </div>
+
+              <PostComposer
+                loggedIn={loggedIn}
+                postForm={postForm}
+                onPostFormChange={setPostForm}
+                onCreatePost={handleCreatePost}
+                postMessage={postMessage}
+              />
+
+              <div className="space-y-6">
+                {posts.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-400">
+                    No posts yet. Be the first to post!
+                  </p>
+                ) : null}
+                {posts.map((post) => (
+                  <PostCard
+                    key={post.post_id}
+                    post={post}
+                    communityName={selectedCommunity?.name}
+                    mediaMap={mediaMap}
+                    onLoadComments={() => handleLoadComments(post.post_id)}
+                    comments={commentLists[post.post_id]}
+                    onCreateComment={(payload) => handleCreateComment(post.post_id, payload)}
+                    loggedIn={loggedIn}
+                    commentMessage={commentMessage}
+                    onOpen={() => handleOpenPost(post.post_id)}
+                  />
+                ))}
+              </div>
+            </section>
+          </div>
+        ) : null}
+        {view === "post" ? (
+          <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[280px_1fr]">
+            <Sidebar
+              communities={communities}
+              selectedCommunityId={selectedCommunityId}
+              onSelectCommunity={setSelectedCommunityId}
+              loggedIn={loggedIn}
+              communityForm={communityForm}
+              onCommunityFormChange={setCommunityForm}
+              onCreateCommunity={handleCreateCommunity}
+              communityMessage={communityMessage}
+            />
+            <section className="space-y-6">
+              <button
+                type="button"
+                className="text-sm font-semibold text-orange-600 hover:text-orange-500"
+                onClick={handleBackHome}
+              >
+                ← Back to community feed
+              </button>
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-xs uppercase text-slate-400">Community details</p>
+                <h2 className="mt-1 text-xl font-semibold text-slate-900">
+                  {selectedCommunity ? `r/${selectedCommunity.name}` : "Community"}
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  {selectedCommunity?.description || "Select a community to see details."}
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                  <span>{posts.length} posts</span>
+                  {selectedCommunity?.created_at ? (
+                    <span>
+                      Created {new Date(selectedCommunity.created_at).toLocaleDateString()}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+              {activePost ? (
                 <PostCard
-                  key={post.post_id}
-                  post={post}
+                  post={activePost}
                   communityName={selectedCommunity?.name}
                   mediaMap={mediaMap}
-                  onLoadComments={() => handleLoadComments(post.post_id)}
-                  comments={commentLists[post.post_id]}
-                  onCreateComment={(payload) => handleCreateComment(post.post_id, payload)}
+                  onLoadComments={() => handleLoadComments(activePost.post_id)}
+                  comments={commentLists[activePost.post_id]}
+                  onCreateComment={(payload) =>
+                    handleCreateComment(activePost.post_id, payload)
+                  }
                   loggedIn={loggedIn}
                   commentMessage={commentMessage}
                 />
-              ))}
-            </div>
-          </section>
-        </main>
-      ) : null}
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-400">
+                  We couldn't find that post. Head back to the feed to pick one.
+                </div>
+              )}
+            </section>
+          </div>
+        ) : null}
+      </main>
+      <Footer />
     </div>
   );
 }

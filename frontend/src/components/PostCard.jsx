@@ -10,12 +10,37 @@ export default function PostCard({
   onCreateComment,
   loggedIn,
   commentMessage,
+  onOpen,
 }) {
+  const handleCardClick = () => {
+    if (onOpen) {
+      onOpen();
+    }
+  };
+
+  const handleKeyDown = (event) => {
+    if (!onOpen) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpen();
+    }
+  };
+
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <article
+      className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition ${
+        onOpen
+          ? "cursor-pointer hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md"
+          : ""
+      }`}
+      onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
+      role={onOpen ? "button" : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+    >
       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-        <span className="rounded-full bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600">
-          r/{communityName}
+        <span className="rounded-full bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-600">
+          r/{communityName || "community"}
         </span>
         <span>{new Date(post.created_at).toLocaleString()}</span>
       </div>
@@ -26,12 +51,16 @@ export default function PostCard({
         <span>{post.num_comments} comments</span>
         <button
           className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
-          onClick={onLoadComments}
+          onClick={(event) => {
+            event.stopPropagation();
+            onLoadComments();
+          }}
+          type="button"
         >
           View comments
         </button>
       </div>
-      <div className="mt-4 space-y-4">
+      <div className="mt-4 space-y-4" onClick={(event) => event.stopPropagation()}>
         {comments === undefined ? (
           <p className="text-sm text-slate-400">Load comments to view the thread.</p>
         ) : comments.length > 0 ? (
@@ -61,11 +90,11 @@ export default function PostCard({
               type="text"
               name="comment"
               placeholder="Add a comment"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
               required
             />
             <button
-              className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+              className="rounded-xl bg-orange-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-500"
               type="submit"
             >
               Comment

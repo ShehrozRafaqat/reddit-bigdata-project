@@ -1,3 +1,20 @@
+const copy = {
+  login: {
+    title: "Welcome back",
+    description: "Log in to join the conversation.",
+    submitLabel: "Log in",
+    footer: "Don't have an account?",
+    toggle: "Sign up",
+  },
+  register: {
+    title: "Create your account",
+    description: "Join the community in a few clicks.",
+    submitLabel: "Sign up",
+    footer: "Already have an account?",
+    toggle: "Log in",
+  },
+};
+
 export default function AuthPage({
   mode,
   authForm,
@@ -7,37 +24,36 @@ export default function AuthPage({
   onSwitchMode,
   onBack,
 }) {
-  const isRegister = mode === "register";
+  const config = copy[mode];
 
   return (
-    <main className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="mb-6 space-y-2">
-          <h2 className="text-2xl font-semibold text-slate-900">
-            {isRegister ? "Create your account" : "Welcome back"}
-          </h2>
-          <p className="text-sm text-slate-500">
-            {isRegister
-              ? "Join the community to start posting and commenting."
-              : "Log in to keep the conversation going."}
-          </p>
-        </div>
-        <form className="space-y-4" onSubmit={onSubmit}>
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-10 lg:flex-row">
+      <section className="flex-1 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-sm font-semibold text-orange-600 hover:text-orange-500"
+        >
+          ← Back to home
+        </button>
+        <h2 className="mt-4 text-2xl font-semibold text-slate-900">{config.title}</h2>
+        <p className="mt-2 text-sm text-slate-500">{config.description}</p>
+        <form className="mt-6 space-y-4" onSubmit={onSubmit}>
           <input
             type="text"
             placeholder="Username"
             value={authForm.username}
             onChange={(event) => onChange({ ...authForm, username: event.target.value })}
-            className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
             required
           />
-          {isRegister ? (
+          {mode === "register" ? (
             <input
               type="email"
-              placeholder="Email"
+              placeholder="Email address"
               value={authForm.email}
               onChange={(event) => onChange({ ...authForm, email: event.target.value })}
-              className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
               required
             />
           ) : null}
@@ -46,50 +62,36 @@ export default function AuthPage({
             placeholder="Password"
             value={authForm.password}
             onChange={(event) => onChange({ ...authForm, password: event.target.value })}
-            className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
             required
           />
           <button
-            className="w-full rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+            className="w-full rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-500"
             type="submit"
           >
-            {isRegister ? "Create account" : "Login"}
+            {config.submitLabel}
           </button>
-          {message ? <span className="text-sm text-rose-500">{message}</span> : null}
+          {message ? <div className="text-sm text-rose-500">{message}</div> : null}
         </form>
-        <div className="mt-6 space-y-3 text-sm text-slate-500">
-          {isRegister ? (
-            <p>
-              Already have an account?{" "}
-              <button
-                type="button"
-                className="font-semibold text-indigo-600 hover:text-indigo-500"
-                onClick={() => onSwitchMode("login")}
-              >
-                Log in
-              </button>
-            </p>
-          ) : (
-            <p>
-              New here?{" "}
-              <button
-                type="button"
-                className="font-semibold text-indigo-600 hover:text-indigo-500"
-                onClick={() => onSwitchMode("register")}
-              >
-                Sign up
-              </button>
-            </p>
-          )}
+        <p className="mt-6 text-sm text-slate-500">
+          {config.footer}{" "}
           <button
             type="button"
-            className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
-            onClick={onBack}
+            className="font-semibold text-orange-600 hover:text-orange-500"
+            onClick={() => onSwitchMode(mode === "login" ? "register" : "login")}
           >
-            Back to feed
+            {config.toggle}
           </button>
-        </div>
-      </div>
-    </main>
+        </p>
+      </section>
+      <section className="flex-1 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <h3 className="text-xl font-semibold text-slate-900">What you can do</h3>
+        <ul className="mt-4 space-y-3 text-sm text-slate-600">
+          <li>• Join your favorite big data communities.</li>
+          <li>• Post updates, links, and data-driven questions.</li>
+          <li>• Share feedback with threaded comments.</li>
+        </ul>
+      </section>
+    </div>
   );
 }
