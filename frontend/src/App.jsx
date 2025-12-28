@@ -3,11 +3,11 @@ import {
   createComment,
   createCommunity,
   createPost,
-  getMediaUrl,
   listComments,
   listCommunities,
   listPosts,
   login,
+  presignMedia,
   register,
   uploadMedia,
 } from "./api";
@@ -40,6 +40,7 @@ export default function App() {
   const [commentForms, setCommentForms] = useState({});
   const [commentLists, setCommentLists] = useState({});
   const [commentMessage, setCommentMessage] = useState("");
+  const [mediaMap, setMediaMap] = useState({});
 
   const loggedIn = Boolean(token);
 
@@ -128,6 +129,10 @@ export default function App() {
       if (postForm.mediaFile) {
         const upload = await uploadMedia(token, postForm.mediaFile);
         mediaKeys.push(upload.media_key);
+        setMediaMap((prev) => ({
+          ...prev,
+          [upload.media_key]: upload.presigned_get_url,
+        }));
       }
 
       await createPost(token, {
@@ -164,6 +169,22 @@ export default function App() {
     }
   };
 
+  const hydrateMedia = async (mediaKeys) => {
+    const missingKeys = mediaKeys.filter((key) => !mediaMap[key]);
+    if (missingKeys.length === 0) return;
+
+    const updates = {};
+    for (const key of missingKeys) {
+      try {
+        const response = await presignMedia(token, key);
+        updates[key] = response.url;
+      } catch (error) {
+        updates[key] = "";
+      }
+    }
+    setMediaMap((prev) => ({ ...prev, ...updates }));
+  };
+
   useEffect(() => {
     loadCommunities().catch(() => undefined);
   }, []);
@@ -171,6 +192,13 @@ export default function App() {
   useEffect(() => {
     loadPosts(selectedCommunityId).catch(() => undefined);
   }, [selectedCommunityId]);
+
+  useEffect(() => {
+    const mediaKeys = posts.flatMap((post) => post.media_keys || []);
+    if (mediaKeys.length > 0 && token) {
+      hydrateMedia(mediaKeys).catch(() => undefined);
+    }
+  }, [posts, token]);
 
   return (
     <div className="app">
@@ -294,7 +322,6 @@ export default function App() {
                   value={communityForm.description}
                   onChange={(event) =>
                     setCommunityForm((prev) => ({ ...prev, description: event.target.value }))
-                  }
                 />
                 <button className="btn primary" type="submit">
                   Create
@@ -335,7 +362,6 @@ export default function App() {
                   value={postForm.body}
                   onChange={(event) =>
                     setPostForm((prev) => ({ ...prev, body: event.target.value }))
-                  }
                 />
                 <input
                   type="file"
@@ -369,7 +395,7 @@ export default function App() {
                 {post.media_keys?.length ? (
                   <div className="media">
                     {post.media_keys.map((key) => {
-                      const url = getMediaUrl(key);
+                      const url = mediaMap[key];
                       if (!url) return null;
                       if (url.match(/\.(mp4|webm|mov)(\?|$)/i)) {
                         return (

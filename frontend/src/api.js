@@ -1,5 +1,4 @@
-const rawBase = import.meta.env.VITE_API_URL || "";
-const API_BASE = rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 const handleResponse = async (response) => {
   if (!response.ok) {
@@ -92,5 +91,3 @@ export const presignMedia = (token, key) =>
       ...authHeaders(token),
     },
   }).then(handleResponse);
-
-export const getMediaUrl = (key) => `${API_BASE}/media/${key}`;

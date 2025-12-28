@@ -61,11 +61,6 @@ npm run dev
 
 Open UI: http://localhost:5173
 
-Optional: set API base URL (defaults to `http://localhost:8000`):
-```bash
-VITE_API_URL=http://localhost:8000 npm run dev
-```
-
 ## 3) Demo-ready flow checklist
 
 ✅ No CORS errors in browser console (React → API)
@@ -77,14 +72,7 @@ VITE_API_URL=http://localhost:8000 npm run dev
 5. **Add Comment**
 6. **Feed renders** (new posts/comments show after submit)
 
-## 4) Doctor / smoke test (recommended)
-
-Run the automated smoke test (brings up stack, waits for API, runs auth/community/post/comment flow, then builds frontend):
-```bash
-./doctor.sh
-```
-
-## 5) Demo seed data
+## 4) Demo seed data
 
 On first startup the API auto-seeds demo data:
 - User: `demo` / `demo1234`
@@ -96,7 +84,7 @@ If you want a clean slate, stop containers and wipe volumes:
 docker compose down -v
 ```
 
-## 6) Swagger demo (backup / for showing APIs)
+## 5) Swagger demo (backup / for showing APIs)
 
 - Register → `POST /auth/register`
 - Login → `POST /auth/login` (copy token)
@@ -107,7 +95,7 @@ docker compose down -v
 - Comment → `POST /comments`
 - List → `GET /communities/{community_id}/posts`, `GET /posts/{post_id}/comments`
 
-## 7) Analytics mini-demo (batch over event logs)
+## 6) Analytics mini-demo (batch over event logs)
 
 Events are appended to JSONL files in:
 `./datalake/events/YYYY-MM-DD.jsonl`
@@ -117,7 +105,7 @@ Run inside the API container:
 docker compose exec api python scripts/daily_metrics.py
 ```
 
-## 8) Troubleshooting
+## 7) Troubleshooting
 
 ### CORS errors in browser (React → API blocked)
 
@@ -140,7 +128,6 @@ docker compose down
 
 - [ ] `docker compose up -d --build`
 - [ ] `npm install` + `npm run dev`
-- [ ] `./doctor.sh` (optional smoke test)
 - [ ] Register + Login from UI
 - [ ] Create community
 - [ ] Create post (optional media upload)

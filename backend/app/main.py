@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
 from sqlmodel import Session
 
+from sqlmodel import Session
+
 from app.db.postgres import create_tables, engine
 from app.routers.auth import router as auth_router
 from app.routers.communities import router as communities_router
@@ -49,7 +51,9 @@ async def init_postgres_with_retry() -> None:
 
 @app.on_event("startup")
 async def on_startup():
-    await init_postgres_with_retry()
+    create_tables()
+    with Session(engine) as session:
+        await seed_demo_data(session)
 
 app.include_router(auth_router)
 app.include_router(communities_router)

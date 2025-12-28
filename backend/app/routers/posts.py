@@ -45,6 +45,7 @@ async def create_post(
     db = get_db()
     await db.posts.insert_one(doc)
 
+    doc.pop("_id", None)
     log_event("post_create", me.id, {"post_id": post_id, "community_id": data.community_id, "has_media": bool(data.media_keys)})
     return doc
 

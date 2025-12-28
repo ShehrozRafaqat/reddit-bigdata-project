@@ -1,6 +1,6 @@
 import boto3
 from botocore.client import Config
-from botocore.exceptions import ClientError
+from io import BytesIO
 
 from app.core.config import MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, MINIO_BUCKET
 
@@ -33,13 +33,7 @@ def presign_get_url(key: str, expires_seconds: int = 3600) -> str:
         ExpiresIn=expires_seconds,
     )
 
-
-def get_object_stream(key: str):
-    s3 = get_s3()
-    try:
-        obj = s3.get_object(Bucket=MINIO_BUCKET, Key=key)
-    except ClientError as exc:
-        if exc.response.get("Error", {}).get("Code") == "NoSuchKey":
-            return None, None
-        raise
-    return obj["Body"], obj.get("ContentType", "application/octet-stream")
+def get_object(key: str):
+    s3 = get_s3()  # use the S3 client
+    obj = s3.get_object(Bucket=MINIO_BUCKET, Key=key)
+    return BytesIO(obj['Body'].read()), obj['ContentType']

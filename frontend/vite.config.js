@@ -6,12 +6,5 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
-    proxy: {
-      "/auth": "http://localhost:8000",
-      "/communities": "http://localhost:8000",
-      "/posts": "http://localhost:8000",
-      "/comments": "http://localhost:8000",
-      "/media": "http://localhost:8000",
-    },
   },
 });
