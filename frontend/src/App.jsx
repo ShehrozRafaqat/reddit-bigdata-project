@@ -322,7 +322,6 @@ export default function App() {
                   value={communityForm.description}
                   onChange={(event) =>
                     setCommunityForm((prev) => ({ ...prev, description: event.target.value }))
-                  }
                 />
                 <button className="btn primary" type="submit">
                   Create
