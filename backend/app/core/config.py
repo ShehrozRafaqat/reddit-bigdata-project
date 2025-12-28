@@ -19,3 +19,5 @@ JWT_SECRET = getenv("JWT_SECRET", "change-me")
 JWT_EXPIRE_MINUTES = int(getenv("JWT_EXPIRE_MINUTES", "1440") or "1440")
 
 EVENT_LOG_DIR = getenv("EVENT_LOG_DIR", "/datalake/events")
+RESET_DB_ON_STARTUP = (getenv("RESET_DB_ON_STARTUP", "true" if APP_ENV == "dev" else "false") or "false").lower() in {"1", "true", "yes"}
+
