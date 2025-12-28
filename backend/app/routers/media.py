@@ -7,6 +7,9 @@ from app.core.deps import get_current_user
 from app.db.models import User
 from app.services.minio_service import ensure_bucket, put_object, presign_get_url
 from app.services.events import log_event
+from fastapi.responses import StreamingResponse
+from app.services.minio_service import get_object
+
 
 router = APIRouter(prefix="/media", tags=["media"])
 
@@ -40,3 +43,8 @@ async def upload_media(file: UploadFile = File(...), me: User = Depends(get_curr
 def presign(key: str, me: User = Depends(get_current_user)):
     url = presign_get_url(key, expires_seconds=3600)
     return PresignOut(key=key, url=url)
+
+@router.get("/{path:path}")
+async def serve_media(path: str):
+    data, content_type = get_object(path)
+    return StreamingResponse(data, media_type=content_type)
