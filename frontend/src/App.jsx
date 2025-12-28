@@ -140,7 +140,10 @@ export default function App() {
         mediaKeys.push(upload.media_key);
         setMediaMap((prev) => ({
           ...prev,
-          [upload.media_key]: upload.presigned_get_url,
+          [upload.media_key]: {
+            url: upload.presigned_get_url,
+            contentType: upload.content_type,
+          },
         }));
       }
 
@@ -186,9 +189,15 @@ export default function App() {
     for (const key of missingKeys) {
       try {
         const response = await presignMedia(token, key);
-        updates[key] = response.url;
+        updates[key] = {
+          url: response.url,
+          contentType: response.content_type,
+        };
       } catch (error) {
-        updates[key] = "";
+        updates[key] = {
+          url: "",
+          contentType: "",
+        };
       }
     }
     setMediaMap((prev) => ({ ...prev, ...updates }));
@@ -460,12 +469,18 @@ export default function App() {
                   {post.media_keys?.length ? (
                     <div className="media">
                       {post.media_keys.map((key) => {
-                        const url = mediaMap[key];
+                        const entry = mediaMap[key];
+                        const url = typeof entry === "string" ? entry : entry?.url;
+                        const contentType =
+                          typeof entry === "string" ? "" : entry?.contentType || "";
                         if (!url) return null;
-                        if (url.match(/\.(mp4|webm|mov)(\?|$)/i)) {
+                        if (contentType.startsWith("video/") || url.match(/\.(mp4|webm|mov|ogg)(\?|$)/i)) {
                           return <video key={key} controls src={url} />;
                         }
-                        return <img key={key} src={url} alt="Post media" />;
+                        if (contentType.startsWith("image/") || url.match(/\.(png|jpe?g|gif|webp)(\?|$)/i)) {
+                          return <img key={key} src={url} alt="Post media" loading="lazy" />;
+                        }
+                        return null;
                       })}
                     </div>
                   ) : null}
