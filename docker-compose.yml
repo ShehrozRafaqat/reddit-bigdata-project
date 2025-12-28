@@ -57,6 +57,7 @@ services:
 
       # MinIO (S3 compatible)
       MINIO_ENDPOINT: http://minio:9000
+      MINIO_PUBLIC_ENDPOINT: http://localhost:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadminpass}
       MINIO_BUCKET: ${MINIO_BUCKET:-media}
@@ -83,7 +84,7 @@ services:
     build:
       context: ./frontend
     environment:
-      VITE_API_BASE: http://api:8000
+      VITE_API_BASE: http://localhost:8000
     ports:
       - "5173:5173"
     depends_on:

@@ -10,6 +10,7 @@ MONGO_URL = getenv("MONGO_URL")
 MONGO_DB = getenv("MONGO_DB", "reddit")
 
 MINIO_ENDPOINT = getenv("MINIO_ENDPOINT", "http://minio:9000")
+MINIO_PUBLIC_ENDPOINT = getenv("MINIO_PUBLIC_ENDPOINT", MINIO_ENDPOINT)
 MINIO_ACCESS_KEY = getenv("MINIO_ACCESS_KEY", "minioadmin")
 MINIO_SECRET_KEY = getenv("MINIO_SECRET_KEY", "minioadminpass")
 MINIO_BUCKET = getenv("MINIO_BUCKET", "media")
