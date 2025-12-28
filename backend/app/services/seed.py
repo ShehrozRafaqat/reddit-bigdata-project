@@ -15,6 +15,7 @@ async def seed_demo_data(session: Session) -> None:
         user = User(
             username="demo",
             email="demo@example.com",
+            display_name="Demo User",
             password_hash=hash_password("demo1234"),
         )
         session.add(user)

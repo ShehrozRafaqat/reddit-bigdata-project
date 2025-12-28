@@ -3,13 +3,18 @@ import {
   createComment,
   createCommunity,
   createPost,
+  getProfile,
   listComments,
   listCommunities,
   listPosts,
+  listUserCommunities,
+  joinCommunity,
+  leaveCommunity,
   login,
   mediaUrl,
   presignMedia,
   register,
+  updateProfile,
   uploadMedia,
 } from "./api";
 import AuthPage from "./components/AuthPage";
@@ -17,6 +22,7 @@ import Footer from "./components/Footer";
 import Header from "./components/Header";
 import PostCard from "./components/PostCard";
 import PostComposer from "./components/PostComposer";
+import ProfilePage from "./components/ProfilePage";
 import Sidebar from "./components/Sidebar";
 
 const emptyForm = {
@@ -49,6 +55,12 @@ export default function App() {
   const [commentMessage, setCommentMessage] = useState("");
   const [mediaMap, setMediaMap] = useState({});
   const [activePostId, setActivePostId] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [profileForm, setProfileForm] = useState({ display_name: "", username: "" });
+  const [profileMessage, setProfileMessage] = useState("");
+  const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [userCommunities, setUserCommunities] = useState({ created: [], joined: [] });
+  const [profileTab, setProfileTab] = useState("joined");
 
   const loggedIn = Boolean(token);
 
@@ -106,6 +118,11 @@ export default function App() {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_username");
     setView("home");
+    setProfile(null);
+    setProfileForm({ display_name: "", username: "" });
+    setProfileMessage("");
+    setProfileImageUrl("");
+    setUserCommunities({ created: [], joined: [] });
   };
 
   const loadCommunities = async () => {
@@ -132,6 +149,7 @@ export default function App() {
       const created = await createCommunity(token, communityForm);
       setCommunityForm({ name: "", description: "" });
       await loadCommunities();
+      await loadUserCommunitiesList();
       setSelectedCommunityId(created.id);
     } catch (error) {
       setCommunityMessage(error.message);
@@ -231,6 +249,102 @@ export default function App() {
     setActivePostId(null);
   };
 
+  const loadProfileDetails = async () => {
+    if (!token) return;
+    const data = await getProfile(token);
+    setProfile(data);
+    setProfileForm({
+      display_name: data.display_name || "",
+      username: data.username || "",
+    });
+    if (data.profile_image_key) {
+      try {
+        const response = await presignMedia(token, data.profile_image_key);
+        setProfileImageUrl(response.url);
+      } catch (error) {
+        setProfileImageUrl(mediaUrl(data.profile_image_key));
+      }
+    } else {
+      setProfileImageUrl("");
+    }
+  };
+
+  const loadUserCommunitiesList = async () => {
+    if (!token) return;
+    const data = await listUserCommunities(token);
+    setUserCommunities({
+      created: data.created || [],
+      joined: data.joined || [],
+    });
+  };
+
+  const handleProfileSave = async (event) => {
+    event.preventDefault();
+    setProfileMessage("");
+    try {
+      const updated = await updateProfile(token, {
+        display_name: profileForm.display_name,
+        username: profileForm.username,
+      });
+      setProfile(updated);
+      setProfileForm({
+        display_name: updated.display_name || "",
+        username: updated.username || "",
+      });
+      if (updated.username !== username) {
+        setUsername(updated.username);
+        localStorage.setItem("auth_username", updated.username);
+      }
+      setProfileMessage("Profile updated.");
+    } catch (error) {
+      setProfileMessage(error.message);
+    }
+  };
+
+  const handleProfileImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setProfileMessage("");
+    try {
+      const upload = await uploadMedia(token, file);
+      const updated = await updateProfile(token, {
+        profile_image_key: upload.media_key,
+      });
+      setProfile(updated);
+      setProfileImageUrl(upload.presigned_get_url);
+      setProfileMessage("Profile photo updated.");
+    } catch (error) {
+      setProfileMessage(error.message);
+    }
+  };
+
+  const handleOpenProfile = () => {
+    setView("profile");
+    setActivePostId(null);
+  };
+
+  const handleOpenCommunity = (communityId) => {
+    setSelectedCommunityId(communityId);
+    setView("home");
+  };
+
+  const handleToggleJoin = async () => {
+    if (!selectedCommunityId) return;
+    const isJoined = userCommunities.joined.some(
+      (community) => community.id === selectedCommunityId
+    );
+    try {
+      if (isJoined) {
+        await leaveCommunity(token, selectedCommunityId);
+      } else {
+        await joinCommunity(token, selectedCommunityId);
+      }
+      await loadUserCommunitiesList();
+    } catch (error) {
+      setCommunityMessage(error.message);
+    }
+  };
+
   useEffect(() => {
     loadCommunities().catch(() => undefined);
   }, []);
@@ -253,6 +367,20 @@ export default function App() {
   }, [loggedIn, view]);
 
   useEffect(() => {
+    if (loggedIn) {
+      loadProfileDetails().catch(() => undefined);
+      loadUserCommunitiesList().catch(() => undefined);
+    }
+  }, [loggedIn]);
+
+  useEffect(() => {
+    if (view === "profile" && loggedIn) {
+      loadProfileDetails().catch(() => undefined);
+      loadUserCommunitiesList().catch(() => undefined);
+    }
+  }, [view, loggedIn]);
+
+  useEffect(() => {
     if (view === "post" && activePostId) {
       handleLoadComments(activePostId).catch(() => undefined);
     }
@@ -267,6 +395,7 @@ export default function App() {
         onRegister={() => switchAuthView("register")}
         onLogout={handleLogout}
         onHome={handleBackHome}
+        onProfile={handleOpenProfile}
       />
 
       <main className="flex-1">
@@ -307,12 +436,29 @@ export default function App() {
 
             <section className="space-y-6">
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-xl font-semibold text-slate-900">
-                  {selectedCommunity ? `r/${selectedCommunity.name}` : "Select a community"}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {selectedCommunity?.description || "Pick a community to see posts."}
-                </p>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-semibold text-slate-900">
+                      {selectedCommunity ? `r/${selectedCommunity.name}` : "Select a community"}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {selectedCommunity?.description || "Pick a community to see posts."}
+                    </p>
+                  </div>
+                  {loggedIn && selectedCommunity ? (
+                    <button
+                      type="button"
+                      onClick={handleToggleJoin}
+                      className="rounded-full border border-orange-200 px-4 py-2 text-xs font-semibold text-orange-600 transition hover:bg-orange-50"
+                    >
+                      {userCommunities.joined.some(
+                        (community) => community.id === selectedCommunity.id
+                      )
+                        ? "Leave community"
+                        : "Join community"}
+                    </button>
+                  ) : null}
+                </div>
               </div>
 
               <PostComposer
@@ -368,13 +514,30 @@ export default function App() {
                 ← Back to community feed
               </button>
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs uppercase text-slate-400">Community details</p>
-                <h2 className="mt-1 text-xl font-semibold text-slate-900">
-                  {selectedCommunity ? `r/${selectedCommunity.name}` : "Community"}
-                </h2>
-                <p className="mt-2 text-sm text-slate-600">
-                  {selectedCommunity?.description || "Select a community to see details."}
-                </p>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase text-slate-400">Community details</p>
+                    <h2 className="mt-1 text-xl font-semibold text-slate-900">
+                      {selectedCommunity ? `r/${selectedCommunity.name}` : "Community"}
+                    </h2>
+                    <p className="mt-2 text-sm text-slate-600">
+                      {selectedCommunity?.description || "Select a community to see details."}
+                    </p>
+                  </div>
+                  {loggedIn && selectedCommunity ? (
+                    <button
+                      type="button"
+                      onClick={handleToggleJoin}
+                      className="rounded-full border border-orange-200 px-4 py-2 text-xs font-semibold text-orange-600 transition hover:bg-orange-50"
+                    >
+                      {userCommunities.joined.some(
+                        (community) => community.id === selectedCommunity.id
+                      )
+                        ? "Leave community"
+                        : "Join community"}
+                    </button>
+                  ) : null}
+                </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-400">
                   <span>{posts.length} posts</span>
                   {selectedCommunity?.created_at ? (
@@ -404,6 +567,22 @@ export default function App() {
               )}
             </section>
           </div>
+        ) : null}
+        {view === "profile" && loggedIn ? (
+          <ProfilePage
+            profile={profile}
+            profileForm={profileForm}
+            onFormChange={setProfileForm}
+            onSaveProfile={handleProfileSave}
+            onImageUpload={handleProfileImageUpload}
+            profileMessage={profileMessage}
+            profileImageUrl={profileImageUrl}
+            activeTab={profileTab}
+            onTabChange={setProfileTab}
+            createdCommunities={userCommunities.created}
+            joinedCommunities={userCommunities.joined}
+            onOpenCommunity={handleOpenCommunity}
+          />
         ) : null}
       </main>
       <Footer />

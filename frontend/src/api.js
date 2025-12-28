@@ -93,3 +93,43 @@ export const presignMedia = (token, key) =>
   }).then(handleResponse);
 
 export const mediaUrl = (key) => `${API_BASE}/media/${key}`;
+
+export const getProfile = (token) =>
+  fetch(`${API_BASE}/users/me`, {
+    headers: {
+      ...authHeaders(token),
+    },
+  }).then(handleResponse);
+
+export const updateProfile = (token, data) =>
+  fetch(`${API_BASE}/users/me`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(token),
+    },
+    body: JSON.stringify(data),
+  }).then(handleResponse);
+
+export const listUserCommunities = (token) =>
+  fetch(`${API_BASE}/users/me/communities`, {
+    headers: {
+      ...authHeaders(token),
+    },
+  }).then(handleResponse);
+
+export const joinCommunity = (token, communityId) =>
+  fetch(`${API_BASE}/communities/${communityId}/join`, {
+    method: "POST",
+    headers: {
+      ...authHeaders(token),
+    },
+  }).then(handleResponse);
+
+export const leaveCommunity = (token, communityId) =>
+  fetch(`${API_BASE}/communities/${communityId}/join`, {
+    method: "DELETE",
+    headers: {
+      ...authHeaders(token),
+    },
+  }).then(handleResponse);

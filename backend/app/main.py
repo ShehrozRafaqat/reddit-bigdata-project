@@ -14,6 +14,7 @@ from app.routers.communities import router as communities_router
 from app.routers.posts import router as posts_router
 from app.routers.comments import router as comments_router
 from app.routers.media import router as media_router
+from app.routers.users import router as users_router
 from app.services.seed import seed_demo_data
 
 app = FastAPI(title="Reddit Big Data MVP", version="0.1.0")
@@ -60,6 +61,7 @@ app.include_router(communities_router)
 app.include_router(posts_router)
 app.include_router(comments_router)
 app.include_router(media_router)
+app.include_router(users_router)
 
 @app.get("/", tags=["health"])
 def root():
