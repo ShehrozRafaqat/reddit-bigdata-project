@@ -1,4 +1,12 @@
-export default function Header({ loggedIn, username, onLogin, onRegister, onLogout, onHome }) {
+export default function Header({
+  loggedIn,
+  username,
+  onLogin,
+  onRegister,
+  onLogout,
+  onHome,
+  onProfile,
+}) {
   const userInitial = username ? username[0].toUpperCase() : "U";
 
   return (
@@ -33,7 +41,13 @@ export default function Header({ loggedIn, username, onLogin, onRegister, onLogo
                   <p className="text-xs uppercase text-slate-400">Signed in as</p>
                   <p className="mt-1 font-semibold text-slate-900">{username}</p>
                   <button
-                    className="mt-4 w-full rounded-xl bg-orange-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-500"
+                    className="mt-4 w-full rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                    onClick={onProfile}
+                  >
+                    Profile settings
+                  </button>
+                  <button
+                    className="mt-3 w-full rounded-xl bg-orange-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-500"
                     onClick={onLogout}
                   >
                     Log out

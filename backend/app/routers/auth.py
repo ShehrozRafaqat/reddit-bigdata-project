@@ -31,7 +31,12 @@ def register(data: RegisterIn, session: Session = Depends(get_session)):
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already exists")
 
-    user = User(username=data.username, email=data.email, password_hash=hash_password(data.password))
+    user = User(
+        username=data.username,
+        email=data.email,
+        display_name=data.username,
+        password_hash=hash_password(data.password),
+    )
     session.add(user)
     session.commit()
     session.refresh(user)
