@@ -7,6 +7,7 @@ import {
   listCommunities,
   listPosts,
   login,
+  mediaUrl,
   presignMedia,
   register,
   uploadMedia,
@@ -197,15 +198,22 @@ export default function App() {
 
     const updates = {};
     for (const key of missingKeys) {
-      try {
-        const response = await presignMedia(token, key);
+      if (token) {
+        try {
+          const response = await presignMedia(token, key);
+          updates[key] = {
+            url: response.url,
+            contentType: response.content_type,
+          };
+        } catch (error) {
+          updates[key] = {
+            url: "",
+            contentType: "",
+          };
+        }
+      } else {
         updates[key] = {
-          url: response.url,
-          contentType: response.content_type,
-        };
-      } catch (error) {
-        updates[key] = {
-          url: "",
+          url: mediaUrl(key),
           contentType: "",
         };
       }
@@ -233,7 +241,7 @@ export default function App() {
 
   useEffect(() => {
     const mediaKeys = posts.flatMap((post) => post.media_keys || []);
-    if (mediaKeys.length > 0 && token) {
+    if (mediaKeys.length > 0) {
       hydrateMedia(mediaKeys).catch(() => undefined);
     }
   }, [posts, token]);

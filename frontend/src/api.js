@@ -91,3 +91,5 @@ export const presignMedia = (token, key) =>
       ...authHeaders(token),
     },
   }).then(handleResponse);
+
+export const mediaUrl = (key) => `${API_BASE}/media/${key}`;
