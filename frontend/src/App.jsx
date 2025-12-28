@@ -321,7 +321,11 @@ export default function App() {
                   placeholder="Short description"
                   value={communityForm.description}
                   onChange={(event) =>
-                    setCommunityForm((prev) => ({ ...prev, description: event.target.value }))
+                    setCommunityForm((prev) => ({
+                      ...prev,
+                      description: event.target.value,
+                    }))
+                  }
                 />
                 <button className="btn primary" type="submit">
                   Create
@@ -361,13 +365,20 @@ export default function App() {
                   placeholder="Write something..."
                   value={postForm.body}
                   onChange={(event) =>
-                    setPostForm((prev) => ({ ...prev, body: event.target.value }))
+                    setPostForm((prev) => ({
+                      ...prev,
+                      body: event.target.value,
+                    }))
+                  }
                 />
                 <input
                   type="file"
                   accept="image/*,video/*"
                   onChange={(event) =>
-                    setPostForm((prev) => ({ ...prev, mediaFile: event.target.files?.[0] || null }))
+                    setPostForm((prev) => ({
+                      ...prev,
+                      mediaFile: event.target.files?.[0] || null,
+                    }))
                   }
                 />
                 <button className="btn primary" type="submit">
@@ -381,9 +392,7 @@ export default function App() {
           </div>
 
           <div className="feed-list">
-            {posts.length === 0 ? (
-              <p className="empty">No posts yet. Be the first to post!</p>
-            ) : null}
+            {posts.length === 0 ? <p className="empty">No posts yet. Be the first to post!</p> : null}
             {posts.map((post) => (
               <article key={post.post_id} className="post-card">
                 <div className="post-meta">
@@ -398,9 +407,7 @@ export default function App() {
                       const url = mediaMap[key];
                       if (!url) return null;
                       if (url.match(/\.(mp4|webm|mov)(\?|$)/i)) {
-                        return (
-                          <video key={key} controls src={url} />
-                        );
+                        return <video key={key} controls src={url} />;
                       }
                       return <img key={key} src={url} alt="Post media" />;
                     })}
