@@ -67,6 +67,7 @@ services:
       JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-1440}
       EVENT_LOG_DIR: /datalake/events
       APP_ENV: ${APP_ENV:-dev}
+      RESET_DB_ON_STARTUP: ${RESET_DB_ON_STARTUP:-true}
     ports:
       - "8000:8000"
     volumes:
