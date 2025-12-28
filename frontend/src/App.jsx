@@ -11,6 +11,11 @@ import {
   register,
   uploadMedia,
 } from "./api";
+import AuthPage from "./components/AuthPage";
+import PostCard from "./components/PostCard";
+import PostComposer from "./components/PostComposer";
+import Sidebar from "./components/Sidebar";
+import TopNav from "./components/TopNav";
 
 const emptyForm = {
   username: "",
@@ -38,7 +43,6 @@ export default function App() {
   const [posts, setPosts] = useState([]);
   const [postForm, setPostForm] = useState(emptyPost);
   const [postMessage, setPostMessage] = useState("");
-  const [commentForms, setCommentForms] = useState({});
   const [commentLists, setCommentLists] = useState({});
   const [commentMessage, setCommentMessage] = useState("");
   const [mediaMap, setMediaMap] = useState({});
@@ -165,15 +169,14 @@ export default function App() {
     setCommentLists((prev) => ({ ...prev, [postId]: list }));
   };
 
-  const handleCreateComment = async (event, postId) => {
-    event.preventDefault();
+  const handleCreateComment = async (postId, { parentId, body }) => {
     setCommentMessage("");
     try {
       await createComment(token, {
         post_id: postId,
-        body: commentForms[postId] || "",
+        body,
+        parent_comment_id: parentId || null,
       });
-      setCommentForms((prev) => ({ ...prev, [postId]: "" }));
       await handleLoadComments(postId);
       await loadPosts(selectedCommunityId);
     } catch (error) {
@@ -224,311 +227,88 @@ export default function App() {
     }
   }, [loggedIn, view]);
 
-  const renderAuthPage = (mode) => {
-    const isRegister = mode === "register";
-    return (
-      <main className="auth-page">
-        <div className="auth-panel">
-          <div className="auth-panel-header">
-            <h2>{isRegister ? "Create your account" : "Welcome back"}</h2>
-            <p className="subtle">
-              {isRegister
-                ? "Join the community to start posting and commenting."
-                : "Log in to keep the conversation going."}
-            </p>
-          </div>
-          <form className="stack" onSubmit={handleAuthSubmit}>
-            <input
-              type="text"
-              placeholder="Username"
-              value={authForm.username}
-              onChange={(event) =>
-                setAuthForm((prev) => ({ ...prev, username: event.target.value }))
-              }
-              required
-            />
-            {isRegister ? (
-              <input
-                type="email"
-                placeholder="Email"
-                value={authForm.email}
-                onChange={(event) =>
-                  setAuthForm((prev) => ({ ...prev, email: event.target.value }))
-                }
-                required
-              />
-            ) : null}
-            <input
-              type="password"
-              placeholder="Password"
-              value={authForm.password}
-              onChange={(event) =>
-                setAuthForm((prev) => ({ ...prev, password: event.target.value }))
-              }
-              required
-            />
-            <button className="btn primary" type="submit">
-              {isRegister ? "Create account" : "Login"}
-            </button>
-            {authMessage ? <span className="error">{authMessage}</span> : null}
-          </form>
-          <div className="auth-panel-footer">
-            {isRegister ? (
-              <p>
-                Already have an account?{" "}
-                <button type="button" className="link-button" onClick={() => switchAuthView("login")}>
-                  Log in
-                </button>
-              </p>
-            ) : (
-              <p>
-                New here?{" "}
-                <button
-                  type="button"
-                  className="link-button"
-                  onClick={() => switchAuthView("register")}
-                >
-                  Sign up
-                </button>
-              </p>
-            )}
-            <button type="button" className="btn ghost" onClick={() => setView("home")}>
-              Back to feed
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  };
-
-  const userInitial = username ? username[0].toUpperCase() : "U";
-
   return (
-    <div className="app">
-      <header className="top-nav">
-        <button type="button" className="logo" onClick={() => setView("home")}>
-          r/bigdata-demo
-        </button>
-        <div className="nav-actions">
-          {loggedIn ? (
-            <div className="user-menu">
-              <div className="user-avatar" aria-label={`Profile for ${username || "user"}`}>
-                {userInitial}
-              </div>
-              <div className="user-dropdown">
-                <div className="user-dropdown-header">
-                  <span className="user-name">{username}</span>
-                  <span className="user-status">Logged in</span>
-                </div>
-                <button className="btn ghost" onClick={handleLogout}>
-                  Log out
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <button className="btn ghost" type="button" onClick={() => switchAuthView("login")}>
-                Log in
-              </button>
-              <button className="btn primary" type="button" onClick={() => switchAuthView("register")}>
-                Sign up
-              </button>
-            </>
-          )}
-        </div>
-      </header>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <TopNav
+        loggedIn={loggedIn}
+        username={username}
+        onLogin={() => switchAuthView("login")}
+        onRegister={() => switchAuthView("register")}
+        onLogout={handleLogout}
+        onHome={() => setView("home")}
+      />
 
-      {view === "login" && !loggedIn ? renderAuthPage("login") : null}
-      {view === "register" && !loggedIn ? renderAuthPage("register") : null}
+      {view === "login" && !loggedIn ? (
+        <AuthPage
+          mode="login"
+          authForm={authForm}
+          message={authMessage}
+          onChange={setAuthForm}
+          onSubmit={handleAuthSubmit}
+          onSwitchMode={switchAuthView}
+          onBack={() => setView("home")}
+        />
+      ) : null}
+      {view === "register" && !loggedIn ? (
+        <AuthPage
+          mode="register"
+          authForm={authForm}
+          message={authMessage}
+          onChange={setAuthForm}
+          onSubmit={handleAuthSubmit}
+          onSwitchMode={switchAuthView}
+          onBack={() => setView("home")}
+        />
+      ) : null}
       {view === "home" ? (
-        <main className="layout">
-          <aside className="sidebar">
-            <div className="sidebar-section">
-              <h3>Communities</h3>
-              <ul className="community-list">
-                {communities.map((community) => (
-                  <li key={community.id}>
-                    <button
-                      className={
-                        community.id === selectedCommunityId
-                          ? "community-item active"
-                          : "community-item"
-                      }
-                      onClick={() => setSelectedCommunityId(community.id)}
-                    >
-                      <span className="community-name">r/{community.name}</span>
-                      <span className="community-desc">{community.description}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              {communities.length === 0 ? (
-                <p className="empty">No communities yet. Create one to start!</p>
-              ) : null}
+        <main className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[280px_1fr]">
+          <Sidebar
+            communities={communities}
+            selectedCommunityId={selectedCommunityId}
+            onSelectCommunity={setSelectedCommunityId}
+            loggedIn={loggedIn}
+            communityForm={communityForm}
+            onCommunityFormChange={setCommunityForm}
+            onCreateCommunity={handleCreateCommunity}
+            communityMessage={communityMessage}
+          />
+
+          <section className="space-y-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="text-xl font-semibold text-slate-900">
+                {selectedCommunity ? `r/${selectedCommunity.name}` : "Select a community"}
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {selectedCommunity?.description || "Pick a community to see posts."}
+              </p>
             </div>
 
-            <div className="sidebar-section">
-              <h3>Create Community</h3>
-              {loggedIn ? (
-                <form className="stack" onSubmit={handleCreateCommunity}>
-                  <input
-                    type="text"
-                    placeholder="Community name"
-                    value={communityForm.name}
-                    onChange={(event) =>
-                      setCommunityForm((prev) => ({ ...prev, name: event.target.value }))
-                    }
-                    required
-                  />
-                  <textarea
-                    placeholder="Short description"
-                    value={communityForm.description}
-                    onChange={(event) =>
-                      setCommunityForm((prev) => ({
-                        ...prev,
-                        description: event.target.value,
-                      }))
-                    }
-                  />
-                  <button className="btn primary" type="submit">
-                    Create
-                  </button>
-                  {communityMessage ? <span className="error">{communityMessage}</span> : null}
-                </form>
-              ) : (
-                <p className="empty">Login to create a community.</p>
-              )}
-            </div>
-          </aside>
+            <PostComposer
+              loggedIn={loggedIn}
+              postForm={postForm}
+              onPostFormChange={setPostForm}
+              onCreatePost={handleCreatePost}
+              postMessage={postMessage}
+            />
 
-          <section className="feed">
-            <div className="feed-header">
-              <div>
-                <h2>{selectedCommunity ? `r/${selectedCommunity.name}` : "Select a community"}</h2>
-                <p className="subtle">
-                  {selectedCommunity?.description || "Pick a community to see posts."}
-                </p>
-              </div>
-            </div>
-
-            <div className="composer">
-              <h3>Create Post</h3>
-              {loggedIn ? (
-                <form className="stack" onSubmit={handleCreatePost}>
-                  <input
-                    type="text"
-                    placeholder="Title"
-                    value={postForm.title}
-                    onChange={(event) =>
-                      setPostForm((prev) => ({ ...prev, title: event.target.value }))
-                    }
-                    required
-                  />
-                  <textarea
-                    placeholder="Write something..."
-                    value={postForm.body}
-                    onChange={(event) =>
-                      setPostForm((prev) => ({
-                        ...prev,
-                        body: event.target.value,
-                      }))
-                    }
-                  />
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    onChange={(event) =>
-                      setPostForm((prev) => ({
-                        ...prev,
-                        mediaFile: event.target.files?.[0] || null,
-                      }))
-                    }
-                  />
-                  <button className="btn primary" type="submit">
-                    Post
-                  </button>
-                  {postMessage ? <span className="error">{postMessage}</span> : null}
-                </form>
-              ) : (
-                <p className="empty">Login to create a post.</p>
-              )}
-            </div>
-
-            <div className="feed-list">
+            <div className="space-y-6">
               {posts.length === 0 ? (
-                <p className="empty">No posts yet. Be the first to post!</p>
+                <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-400">
+                  No posts yet. Be the first to post!
+                </p>
               ) : null}
               {posts.map((post) => (
-                <article key={post.post_id} className="post-card">
-                  <div className="post-meta">
-                    <span className="tag">r/{selectedCommunity?.name}</span>
-                    <span className="tag">{new Date(post.created_at).toLocaleString()}</span>
-                  </div>
-                  <h3>{post.title}</h3>
-                  {post.body ? <p>{post.body}</p> : null}
-                  {post.media_keys?.length ? (
-                    <div className="media">
-                      {post.media_keys.map((key) => {
-                        const entry = mediaMap[key];
-                        const url = typeof entry === "string" ? entry : entry?.url;
-                        const contentType =
-                          typeof entry === "string" ? "" : entry?.contentType || "";
-                        if (!url) return null;
-                        if (contentType.startsWith("video/") || url.match(/\.(mp4|webm|mov|ogg)(\?|$)/i)) {
-                          return <video key={key} controls src={url} />;
-                        }
-                        if (contentType.startsWith("image/") || url.match(/\.(png|jpe?g|gif|webp)(\?|$)/i)) {
-                          return <img key={key} src={url} alt="Post media" loading="lazy" />;
-                        }
-                        return null;
-                      })}
-                    </div>
-                  ) : null}
-                  <div className="post-actions">
-                    <span>{post.num_comments} comments</span>
-                    <button className="btn ghost" onClick={() => handleLoadComments(post.post_id)}>
-                      View comments
-                    </button>
-                  </div>
-
-                  <div className="comments">
-                    {(commentLists[post.post_id] || []).map((comment) => (
-                      <div className="comment" key={comment.comment_id}>
-                        <div className="comment-meta">
-                          <span>u/{comment.author_user_id}</span>
-                          <span>{new Date(comment.created_at).toLocaleString()}</span>
-                        </div>
-                        <p>{comment.body}</p>
-                      </div>
-                    ))}
-
-                    {loggedIn ? (
-                      <form
-                        className="comment-form"
-                        onSubmit={(event) => handleCreateComment(event, post.post_id)}
-                      >
-                        <input
-                          type="text"
-                          placeholder="Add a comment"
-                          value={commentForms[post.post_id] || ""}
-                          onChange={(event) =>
-                            setCommentForms((prev) => ({
-                              ...prev,
-                              [post.post_id]: event.target.value,
-                            }))
-                          }
-                          required
-                        />
-                        <button className="btn" type="submit">
-                          Comment
-                        </button>
-                      </form>
-                    ) : (
-                      <p className="empty">Login to add comments.</p>
-                    )}
-                    {commentMessage ? <span className="error">{commentMessage}</span> : null}
-                  </div>
-                </article>
+                <PostCard
+                  key={post.post_id}
+                  post={post}
+                  communityName={selectedCommunity?.name}
+                  mediaMap={mediaMap}
+                  onLoadComments={() => handleLoadComments(post.post_id)}
+                  comments={commentLists[post.post_id]}
+                  onCreateComment={(payload) => handleCreateComment(post.post_id, payload)}
+                  loggedIn={loggedIn}
+                  commentMessage={commentMessage}
+                />
               ))}
             </div>
           </section>

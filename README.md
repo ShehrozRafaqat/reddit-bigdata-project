@@ -8,6 +8,57 @@ A **small Reddit-style MVP** aligned with the design doc:
 
 ---
 
+## Architecture overview
+
+```
+┌───────────────────────────┐
+│        React UI           │
+│  Vite + Tailwind CSS      │
+└────────────┬──────────────┘
+             │ HTTP (REST)
+┌────────────▼──────────────┐
+│        FastAPI API         │
+│   auth, posts, comments    │
+└───────┬─────────┬──────────┘
+        │         │
+        │         ├─────────────┐
+        │         │             │
+┌───────▼──────┐  │      ┌──────▼────────┐
+│ PostgreSQL  │  │      │ MongoDB        │
+│ users +     │  │      │ posts/comments │
+│ communities │  │      └────────────────┘
+└─────────────┘  │
+                 │      ┌────────────────┐
+                 └──────► MinIO (S3)     │
+                        │ media objects │
+                        └────────────────┘
+
+Event log (JSONL) written to ./datalake/events
+```
+
+---
+
+## Project structure
+
+```
+backend/
+  app/
+    routers/          # FastAPI route handlers (auth, posts, comments, media)
+    services/         # business logic helpers + seed data
+    db/               # SQLModel + Mongo adapters
+  drizzle/
+    schema.ts         # Drizzle ORM schema for users/communities
+    drizzle.config.ts # Drizzle config (optional migrations)
+
+frontend/
+  src/
+    components/       # Small, reusable UI blocks (nav, sidebar, posts, comments)
+    api.js            # REST client helpers
+    App.jsx           # App orchestration + state
+```
+
+---
+
 ## 0) Prerequisites
 1. Install **Docker Desktop**.
 2. Install **Node.js 18+** (for the React UI).
@@ -60,6 +111,11 @@ npm run dev
 ```
 
 Open UI: http://localhost:5173
+
+### Optional: Drizzle schema (Postgres)
+
+The Postgres schema is also mirrored in `backend/drizzle/schema.ts` so you can
+optionally generate migrations with Drizzle (e.g. `drizzle-kit`), if desired.
 
 ## 3) Demo-ready flow checklist
 
