@@ -17,7 +17,7 @@ export default function Header({
           className="text-lg font-semibold text-orange-600"
           onClick={onHome}
         >
-          r/bigdata-demo
+          Reddit Big Data Project
         </button>
         <div className="flex items-center gap-3">
           {loggedIn ? (

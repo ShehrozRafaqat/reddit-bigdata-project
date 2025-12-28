@@ -51,6 +51,7 @@ export default function App() {
   const [communityMessage, setCommunityMessage] = useState("");
   const [communityEditForm, setCommunityEditForm] = useState({ name: "", description: "" });
   const [communityEditMessage, setCommunityEditMessage] = useState("");
+  const [communitySearch, setCommunitySearch] = useState("");
   const [posts, setPosts] = useState([]);
   const [postForm, setPostForm] = useState(emptyPost);
   const [postMessage, setPostMessage] = useState("");
@@ -76,6 +77,24 @@ export default function App() {
     () => posts.find((post) => post.post_id === activePostId),
     [posts, activePostId]
   );
+
+  const filteredCommunities = useMemo(() => {
+    const query = communitySearch.trim().toLowerCase();
+    if (!query) return communities;
+    return communities.filter((community) => {
+      const name = community.name?.toLowerCase() || "";
+      const description = community.description?.toLowerCase() || "";
+      return name.includes(query) || description.includes(query);
+    });
+  }, [communities, communitySearch]);
+
+  const isMember = useMemo(() => {
+    if (!loggedIn || !selectedCommunityId) return false;
+    return (
+      userCommunities.joined.some((community) => community.id === selectedCommunityId) ||
+      userCommunities.created.some((community) => community.id === selectedCommunityId)
+    );
+  }, [loggedIn, selectedCommunityId, userCommunities.created, userCommunities.joined]);
 
   const resetAuthForm = () => {
     setAuthForm(emptyForm);
@@ -194,6 +213,10 @@ export default function App() {
       setPostMessage("Select a community first.");
       return;
     }
+    if (!isMember) {
+      setPostMessage("Join this community to post.");
+      return;
+    }
     try {
       const mediaKeys = [];
       if (postForm.mediaFile) {
@@ -228,6 +251,10 @@ export default function App() {
 
   const handleCreateComment = async (postId, { parentId, body }) => {
     setCommentMessage("");
+    if (!isMember) {
+      setCommentMessage("Join this community to comment.");
+      return;
+    }
     try {
       await createComment(token, {
         post_id: postId,
@@ -455,7 +482,7 @@ export default function App() {
         {view === "home" ? (
           <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[280px_1fr]">
             <Sidebar
-              communities={communities}
+              communities={filteredCommunities}
               selectedCommunityId={selectedCommunityId}
               onSelectCommunity={setSelectedCommunityId}
               loggedIn={loggedIn}
@@ -463,6 +490,8 @@ export default function App() {
               onCommunityFormChange={setCommunityForm}
               onCreateCommunity={handleCreateCommunity}
               communityMessage={communityMessage}
+              communitySearch={communitySearch}
+              onCommunitySearchChange={setCommunitySearch}
             />
 
             <section className="space-y-6">
@@ -534,6 +563,7 @@ export default function App() {
 
               <PostComposer
                 loggedIn={loggedIn}
+                canPost={isMember}
                 postForm={postForm}
                 onPostFormChange={setPostForm}
                 onCreatePost={handleCreatePost}
@@ -556,6 +586,7 @@ export default function App() {
                     comments={commentLists[post.post_id]}
                     onCreateComment={(payload) => handleCreateComment(post.post_id, payload)}
                     loggedIn={loggedIn}
+                    canComment={isMember}
                     commentMessage={commentMessage}
                     onOpen={() => handleOpenPost(post.post_id)}
                   />
@@ -567,7 +598,7 @@ export default function App() {
         {view === "post" ? (
           <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[280px_1fr]">
             <Sidebar
-              communities={communities}
+              communities={filteredCommunities}
               selectedCommunityId={selectedCommunityId}
               onSelectCommunity={setSelectedCommunityId}
               loggedIn={loggedIn}
@@ -575,6 +606,8 @@ export default function App() {
               onCommunityFormChange={setCommunityForm}
               onCreateCommunity={handleCreateCommunity}
               communityMessage={communityMessage}
+              communitySearch={communitySearch}
+              onCommunitySearchChange={setCommunitySearch}
             />
             <section className="space-y-6">
               <button
@@ -629,6 +662,7 @@ export default function App() {
                     handleCreateComment(activePost.post_id, payload)
                   }
                   loggedIn={loggedIn}
+                  canComment={isMember}
                   commentMessage={commentMessage}
                 />
               ) : (

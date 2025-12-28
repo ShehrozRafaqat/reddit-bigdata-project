@@ -1,8 +1,22 @@
-export default function PostComposer({ loggedIn, postForm, onPostFormChange, onCreatePost, postMessage }) {
+export default function PostComposer({
+  loggedIn,
+  canPost,
+  postForm,
+  onPostFormChange,
+  onCreatePost,
+  postMessage,
+}) {
   if (!loggedIn) {
     return (
       <section className="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-sm text-slate-400">
         Login to create a post.
+      </section>
+    );
+  }
+  if (!canPost) {
+    return (
+      <section className="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-sm text-slate-400">
+        Join this community to create a post.
       </section>
     );
   }

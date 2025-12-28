@@ -4,10 +4,12 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlmodel import Session, select
 
 from app.core.deps import get_current_user
+from app.db.postgres import get_session
 from app.db.mongo import get_db
-from app.db.models import User
+from app.db.models import CommunityMembership, User
 from app.services.events import log_event
 
 router = APIRouter(tags=["comments"])
@@ -18,11 +20,27 @@ class CommentIn(BaseModel):
     parent_comment_id: Optional[str] = None
 
 @router.post("/comments", response_model=dict)
-async def add_comment(data: CommentIn, me: User = Depends(get_current_user)):
+async def add_comment(
+    data: CommentIn,
+    session: Session = Depends(get_session),
+    me: User = Depends(get_current_user),
+):
     db = get_db()
     post = await db.posts.find_one({"post_id": data.post_id})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+    community_id = post.get("community_id")
+    if not community_id:
+        raise HTTPException(status_code=400, detail="Post community missing")
+
+    membership = session.exec(
+        select(CommunityMembership).where(
+            CommunityMembership.user_id == me.id,
+            CommunityMembership.community_id == community_id,
+        )
+    ).first()
+    if not membership:
+        raise HTTPException(status_code=403, detail="Join the community to comment.")
 
     comment_id = str(uuid.uuid4())
     doc = {

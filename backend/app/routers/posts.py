@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 from app.core.deps import get_current_user
-from app.db.models import Community, User
+from app.db.models import Community, CommunityMembership, User
 from app.db.postgres import get_session
 from app.db.mongo import get_db
 from app.services.events import log_event
@@ -29,6 +29,15 @@ async def create_post(
     community = session.exec(select(Community).where(Community.id == data.community_id)).first()
     if not community:
         raise HTTPException(status_code=404, detail="Community not found")
+
+    membership = session.exec(
+        select(CommunityMembership).where(
+            CommunityMembership.user_id == me.id,
+            CommunityMembership.community_id == data.community_id,
+        )
+    ).first()
+    if not membership:
+        raise HTTPException(status_code=403, detail="Join the community to post.")
 
     post_id = str(uuid.uuid4())
     doc = {
