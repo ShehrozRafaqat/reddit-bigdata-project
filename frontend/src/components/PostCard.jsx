@@ -9,6 +9,7 @@ export default function PostCard({
   comments,
   onCreateComment,
   loggedIn,
+  canComment,
   commentMessage,
   onOpen,
 }) {
@@ -76,7 +77,7 @@ export default function PostCard({
           <p className="text-sm text-slate-400">No comments yet.</p>
         )}
 
-        {loggedIn ? (
+        {loggedIn && canComment ? (
           <form
             className="space-y-2"
             onSubmit={(event) => {
@@ -103,6 +104,8 @@ export default function PostCard({
               Comment
             </button>
           </form>
+        ) : loggedIn ? (
+          <p className="text-sm text-slate-400">Join this community to comment.</p>
         ) : (
           <p className="text-sm text-slate-400">Login to add comments.</p>
         )}
