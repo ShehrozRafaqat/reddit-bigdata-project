@@ -32,12 +32,73 @@ body {
   font-weight: 700;
   font-size: 20px;
   color: #ff4500;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .nav-actions {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+.user-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff4500, #ff7a32);
+  color: #ffffff;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 14px rgba(255, 69, 0, 0.25);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #edeff1;
+  border-radius: 12px;
+  padding: 12px;
+  min-width: 180px;
+  display: grid;
+  gap: 10px;
+  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.08);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  z-index: 20;
+}
+
+.user-menu:hover .user-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.user-dropdown-header {
+  display: grid;
+  gap: 2px;
+}
+
+.user-name {
+  font-weight: 600;
+}
+
+.user-status {
+  font-size: 12px;
+  color: #7c7c7c;
 }
 
 .auth-card {
@@ -90,6 +151,42 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.auth-page {
+  display: grid;
+  place-items: center;
+  padding: 48px 24px;
+}
+
+.auth-panel {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid #edeff1;
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.08);
+  display: grid;
+  gap: 16px;
+}
+
+.auth-panel-header h2 {
+  margin: 0;
+}
+
+.auth-panel-footer {
+  display: grid;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #ff4500;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
 }
 
 .layout {
