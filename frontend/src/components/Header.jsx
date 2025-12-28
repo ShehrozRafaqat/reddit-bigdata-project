@@ -36,7 +36,7 @@ export default function Header({
                 <span className="text-xs font-semibold">{username}</span>
                 <span className="text-xs text-slate-400">▾</span>
               </button>
-              <div className="pointer-events-none absolute right-0 mt-2 w-56 opacity-0 transition group-hover:pointer-events-auto group-hover:opacity-100">
+              <div className="pointer-events-none absolute right-0 top-full w-56 pt-2 opacity-0 transition group-hover:pointer-events-auto group-hover:opacity-100">
                 <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-lg">
                   <p className="text-xs uppercase text-slate-400">Signed in as</p>
                   <p className="mt-1 font-semibold text-slate-900">{username}</p>
