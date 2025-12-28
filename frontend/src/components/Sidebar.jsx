@@ -20,7 +20,7 @@ export default function Sidebar({
                 <button
                   className={`w-full rounded-xl border px-3 py-2 text-left transition ${
                     isActive
-                      ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                      ? "border-orange-500 bg-orange-50 text-orange-700"
                       : "border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900"
                   }`}
                   onClick={() => onSelectCommunity(community.id)}
@@ -48,7 +48,7 @@ export default function Sidebar({
               onChange={(event) =>
                 onCommunityFormChange({ ...communityForm, name: event.target.value })
               }
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
               required
             />
             <textarea
@@ -60,11 +60,11 @@ export default function Sidebar({
                   description: event.target.value,
                 })
               }
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
               rows={3}
             />
             <button
-              className="w-full rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+              className="w-full rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-500"
               type="submit"
             >
               Create
