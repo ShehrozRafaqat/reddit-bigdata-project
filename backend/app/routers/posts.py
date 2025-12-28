@@ -35,6 +35,8 @@ async def create_post(
         "post_id": post_id,
         "community_id": data.community_id,
         "author_user_id": me.id,
+        "author_username": me.username,
+        "author_display_name": me.display_name,
         "title": data.title,
         "body": data.body,
         "media_keys": data.media_keys,
@@ -50,19 +52,41 @@ async def create_post(
     return doc
 
 @router.get("/communities/{community_id}/posts", response_model=list[dict])
-async def list_posts(community_id: int, limit: int = 20, skip: int = 0):
+async def list_posts(
+    community_id: int,
+    limit: int = 20,
+    skip: int = 0,
+    session: Session = Depends(get_session),
+):
     db = get_db()
     cursor = db.posts.find({"community_id": community_id}).sort("created_at", -1).skip(skip).limit(limit)
     posts = await cursor.to_list(length=limit)
+    author_ids = {post.get("author_user_id") for post in posts if post.get("author_user_id")}
+    author_map = {}
+    if author_ids:
+        users = session.exec(select(User).where(User.id.in_(author_ids))).all()
+        author_map = {
+            user.id: {"author_username": user.username, "author_display_name": user.display_name}
+            for user in users
+        }
     for p in posts:
         p.pop("_id", None)
+        author = author_map.get(p.get("author_user_id"))
+        if author:
+            p.update(author)
     return posts
 
 @router.get("/posts/{post_id}", response_model=dict)
-async def get_post(post_id: str):
+async def get_post(post_id: str, session: Session = Depends(get_session)):
     db = get_db()
     p = await db.posts.find_one({"post_id": post_id})
     if not p:
         raise HTTPException(status_code=404, detail="Post not found")
     p.pop("_id", None)
+    author_user_id = p.get("author_user_id")
+    if author_user_id:
+        user = session.exec(select(User).where(User.id == author_user_id)).first()
+        if user:
+            p["author_username"] = user.username
+            p["author_display_name"] = user.display_name
     return p
