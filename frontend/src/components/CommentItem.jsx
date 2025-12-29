@@ -1,10 +1,14 @@
 import { useState } from "react";
 
-export default function CommentItem({ comment, loggedIn, onReply }) {
+export default function CommentItem({ comment, loggedIn, onReply, depth = 0, children }) {
   const [showReply, setShowReply] = useState(false);
+  const indent = Math.min(depth * 16, 64);
 
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+    <div
+      className="rounded-xl border border-slate-100 bg-slate-50 p-3"
+      style={{ marginLeft: indent }}
+    >
       <div className="text-xs text-slate-500">
         {comment.author || "Anonymous"} • {new Date(comment.created_at).toLocaleString()}
       </div>
@@ -46,6 +50,9 @@ export default function CommentItem({ comment, loggedIn, onReply }) {
             Post reply
           </button>
         </form>
+      ) : null}
+      {children ? (
+        <div className="mt-3 space-y-3 border-l border-slate-200 pl-4">{children}</div>
       ) : null}
     </div>
   );
